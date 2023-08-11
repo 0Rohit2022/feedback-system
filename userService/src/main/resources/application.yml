@@ -1,0 +1,98 @@
+  server:
+    port: 8081
+
+  spring:
+    datasource:
+      url: jdbc:mysql://localhost:3306/microservices
+      username: root
+      password: test
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+    jpa:
+      database-platform: org.hibernate.dialect.MySQL8Dialect
+      hibernate:
+        ddl-auto: update
+      properties:
+        hibernate:
+          show_sql: true
+          format_sql: true
+    application:
+      name: USER-SERVICE
+#  eureka:
+#    instance:
+#      preferIpAddress: true
+#    client:
+#      fetchRegistry: true
+#      registerWithEureka: true
+#      serviceUrl:
+#        defaultzone: http://localhost:8761/eureka
+
+    config:
+      import: optional:configserver:http://localhost:8085
+
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: https://dev-22186400.okta.com/oauth2/default
+        client:
+          registration:
+            my-internal-client:
+              provider: okta
+              authorization-grant-type: client_credentials
+              scope: internal
+              clientId: 0oaaf7o6f1jWQ7Ciu5d7
+              clientSecret: AlSTSknR9G2yoXaRfTBRS8M5Jjghr44gLtv03fZW
+
+          provider:
+            okta:
+              issuer-uri: https://dev-22186400.okta.com/oauth2/default
+
+  management:
+    health:
+      circuitbreakers:
+        enabled: true
+    endpoints:
+      web:
+        exposure:
+          include: health
+
+
+    endpoint:
+      health:
+        showDetails: always
+
+  resilience4j:
+    circuitbreaker:
+      instances:
+        ratingHotelBreaker:
+          registerHealthIndicator : true
+          eventConsumerBufferSize : 10
+          failureRateThreshold : 50
+          minimumNumberOfCalls : 5
+          automaticTransitionFromOpenToHalfOpenEnabled : true
+          waitDurationInOpenState: 6s
+          permittedNumberOfCallsInHalfOpenState : 3
+          slidingWindowSize: 10
+          slidingWindowType: COUNT_BASED
+    retry:
+      instances:
+        ratingHotelService:
+          max-attempts: 3
+          wait-duration: 5s
+
+    ratelimiter:
+      instances:
+        userratelimiter:
+          limit-refresh-period: 4s
+          limit-for-period: 1
+          timeout-duration: 3s
+
+  okta:
+    oauth2:
+      issuer: https://dev-22186400.okta.com/oauth2/default
+      audience: api://default
+
+#Sign in url redirect
+#http://localhost:8084/authorization-code/callback
